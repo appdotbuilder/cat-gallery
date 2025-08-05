@@ -1,10 +1,21 @@
 
+import { db } from '../db';
+import { photosTable } from '../db/schema';
 import { type DeletePhotoInput } from '../schema';
+import { eq } from 'drizzle-orm';
 
 export const deletePhoto = async (input: DeletePhotoInput): Promise<{ success: boolean }> => {
-    // This is a placeholder declaration! Real code should be implemented here.
-    // The goal of this handler is deleting a photo from the database and file storage.
-    // Should validate that the photo exists and belongs to a cat owned by the requesting user.
-    // Should also handle file deletion from storage system.
-    return Promise.resolve({ success: true });
+  try {
+    // Delete the photo record
+    const result = await db.delete(photosTable)
+      .where(eq(photosTable.id, input.id))
+      .returning()
+      .execute();
+
+    // Return success based on whether a record was actually deleted
+    return { success: result.length > 0 };
+  } catch (error) {
+    console.error('Photo deletion failed:', error);
+    throw error;
+  }
 };

@@ -1,10 +1,29 @@
 
+import { db } from '../db';
+import { catsTable } from '../db/schema';
 import { type DeleteCatInput } from '../schema';
+import { eq } from 'drizzle-orm';
 
 export const deleteCat = async (input: DeleteCatInput): Promise<{ success: boolean }> => {
-    // This is a placeholder declaration! Real code should be implemented here.
-    // The goal of this handler is deleting a cat and all its associated photos.
-    // Should validate that the cat exists and belongs to the requesting user.
-    // Should cascade delete all photos and handle file cleanup from storage.
-    return Promise.resolve({ success: true });
+  try {
+    // Check if cat exists first
+    const existingCat = await db.select()
+      .from(catsTable)
+      .where(eq(catsTable.id, input.id))
+      .execute();
+
+    if (existingCat.length === 0) {
+      throw new Error(`Cat with id ${input.id} not found`);
+    }
+
+    // Delete the cat - cascading deletes will handle photos automatically
+    const result = await db.delete(catsTable)
+      .where(eq(catsTable.id, input.id))
+      .execute();
+
+    return { success: true };
+  } catch (error) {
+    console.error('Cat deletion failed:', error);
+    throw error;
+  }
 };
